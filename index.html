@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1b6b8f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bounce Reborn">
+<meta name="description" content="BOUNCE REBORN: plataformas de una pelota roja rebotadora, para iPhone y navegador.">
+<title>Bounce Reborn</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1d1638;
+  --paper: #fff8ec;
+  --red: #ef2b2b;
+  --red-dark: #a3101f;
+  --gold: #ffcc33;
+  --leaf: #5fc43c;
+  --sky-1: #63c8f2;
+  --sky-2: #c9f2ff;
+  --panel: rgba(255, 248, 236, 0.97);
+  --panel-ink: #2a1d4a;
+  --muted: #6b5f86;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --font: "Baloo 2", "Arial Rounded MT Bold", ui-rounded, system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none;
+  background: linear-gradient(180deg, var(--sky-1) 0%, #9fe0f7 55%, var(--sky-2) 100%);
+  color: var(--ink); font-family: var(--font);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  touch-action: none;
+}
+body.lab { background: linear-gradient(180deg, #2b2f55 0%, #4b4f86 60%, #6c6fa8 100%); }
+#game { position: fixed; inset: 0; }
+#game canvas { display: block; }
+button { font-family: var(--font); cursor: pointer; }
+
+/* ---------- screens ---------- */
+.screen {
+  position: fixed; inset: 0; z-index: 40; display: none;
+  align-items: center; justify-content: center;
+  padding: calc(16px + var(--safe-t)) calc(16px + var(--safe-r)) calc(16px + var(--safe-b)) calc(16px + var(--safe-l));
+  overflow-y: auto; touch-action: pan-y;
+}
+.screen.show { display: flex; animation: fade .22s ease-out; }
+.screen.dim { background: rgba(20, 14, 44, 0.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.panel {
+  background: var(--panel); color: var(--panel-ink); border-radius: 26px; padding: 22px 24px;
+  box-shadow: 0 6px 0 rgba(42, 29, 74, 0.35), 0 18px 40px rgba(20, 10, 50, 0.35);
+  border: 3px solid var(--panel-ink); width: min(440px, 100%); text-align: center; max-height: 100%; overflow-y: auto;
+}
+.panel h2 { margin: 0 0 6px; font-size: 30px; line-height: 1.1; font-weight: 800; }
+.panel p { margin: 4px 0 12px; color: var(--muted); font-size: 16px; }
+.btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.btns.row { flex-direction: row; justify-content: center; flex-wrap: wrap; }
+.btn {
+  border: 3px solid var(--panel-ink); border-radius: 18px; padding: 10px 18px; min-height: 52px;
+  font-size: 20px; font-weight: 800; color: var(--panel-ink); background: #fff;
+  box-shadow: 0 4px 0 var(--panel-ink); transition: transform .08s, box-shadow .08s;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--panel-ink); }
+.btn.primary { background: var(--red); color: #fff; }
+.btn.go { background: var(--leaf); color: #fff; }
+.btn.small { min-height: 44px; font-size: 17px; padding: 6px 14px; }
+
+/* title */
+#title { flex-direction: column; gap: 10px; }
+.logo { text-align: center; line-height: .9; }
+.logo .l1, .logo .l2 {
+  display: block; font-weight: 800; letter-spacing: 1px; color: #fff;
+  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
+  text-shadow: 0 6px 0 var(--ink);
+}
+.logo .l1 { font-size: clamp(44px, 11vw, 96px); }
+.logo .l2 { font-size: clamp(38px, 9vw, 80px); color: var(--red); }
+.hero-ball {
+  width: 74px; height: 74px; border-radius: 50%; margin: 6px auto 0; position: relative;
+  background: radial-gradient(circle at 34% 30%, #ff9a80 0%, #ef2b2b 55%, #a3101f 100%);
+  border: 3px solid var(--ink); animation: hop 1s cubic-bezier(.3,.0,.4,1) infinite;
+}
+.hero-ball::before, .hero-ball::after {
+  content: ""; position: absolute; top: 22px; width: 13px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 60%, #1b0d24 0 3px, #fff 3.5px); border: 2px solid var(--ink);
+}
+.hero-ball::before { left: 18px; } .hero-ball::after { right: 18px; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0) scale(1.12, .86); }
+  12% { transform: translateY(-6px) scale(.94, 1.08); }
+  50% { transform: translateY(-46px) scale(1, 1); }
+  88% { transform: translateY(-6px) scale(.96, 1.04); }
+}
+.title-menu { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
+.title-menu .btn { min-width: 150px; }
+.tip { font-size: 14px; color: #0d3a52; background: rgba(255,255,255,.7); padding: 6px 12px; border-radius: 12px; max-width: 520px; text-align: center; }
+.version { position: fixed; right: calc(10px + var(--safe-r)); bottom: calc(6px + var(--safe-b)); font-size: 12px; color: rgba(13,58,82,.7); }
+
+/* level select */
+.levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 10px; text-align: left; }
+.lvl {
+  border: 3px solid var(--panel-ink); border-radius: 18px; padding: 10px 12px; background: #fff; min-height: 104px;
+  box-shadow: 0 4px 0 var(--panel-ink); display: flex; flex-direction: column; gap: 2px; color: var(--panel-ink); text-align: left;
+}
+.lvl:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--panel-ink); }
+.lvl .n { font-size: 13px; color: var(--muted); font-weight: 700; }
+.lvl .t { font-size: 19px; font-weight: 800; line-height: 1.1; }
+.lvl .s { font-size: 14px; color: var(--muted); margin-top: auto; }
+.lvl.locked { opacity: .55; box-shadow: 0 4px 0 #8c84a6; border-color: #8c84a6; }
+.lvl.lab { background: #e9e7ff; }
+
+/* settings */
+.field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 2px dashed #e4d9c6; font-size: 17px; text-align: left; }
+.field:last-of-type { border-bottom: 0; }
+.field input[type=range] { width: 52%; accent-color: var(--red); height: 30px; }
+.field select { font-family: var(--font); font-size: 16px; border: 2px solid var(--panel-ink); border-radius: 10px; padding: 4px 8px; background: #fff; }
+.field input[type=checkbox] { width: 26px; height: 26px; accent-color: var(--red); }
+.small-note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+/* result */
+.stats { display: flex; justify-content: center; gap: 12px; margin: 12px 0 4px; flex-wrap: wrap; }
+.stat { background: #fff; border: 3px solid var(--panel-ink); border-radius: 16px; padding: 6px 14px; min-width: 104px; }
+.stat b { display: block; font-size: 26px; line-height: 1.1; }
+.stat span { font-size: 13px; color: var(--muted); }
+.medals { display: flex; gap: 10px; justify-content: center; margin: 10px 0 0; }
+.medal { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--panel-ink); background: #ddd6c6; display: grid; place-items: center; font-size: 22px; filter: grayscale(1); opacity: .5; }
+.medal.on { background: var(--gold); filter: none; opacity: 1; animation: pop .4s ease-out backwards; }
+.medal.on:nth-child(2) { animation-delay: .15s; } .medal.on:nth-child(3) { animation-delay: .3s; }
+@keyframes pop { from { transform: scale(.2); } 70% { transform: scale(1.2); } to { transform: scale(1); } }
+.newrec { color: var(--red); font-weight: 800; font-size: 15px; min-height: 20px; }
+
+/* ---------- HUD ---------- */
+#hud {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 20; display: none; pointer-events: none;
+  padding: calc(8px + var(--safe-t)) calc(12px + var(--safe-r)) 0 calc(12px + var(--safe-l));
+  justify-content: space-between; align-items: flex-start;
+}
+#hud.show { display: flex; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; background: rgba(255,248,236,.92); border: 3px solid var(--ink);
+  border-radius: 999px; padding: 2px 12px 2px 6px; font-weight: 800; font-size: 20px; box-shadow: 0 3px 0 var(--ink); line-height: 1.3;
+}
+.chip + .chip { margin-left: 8px; }
+.egg-ico { width: 20px; height: 24px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; background: radial-gradient(circle at 35% 30%, #fff6c2 0 12%, #ffcc33 45%, #d4800f 100%); border: 2px solid #7a3e05; }
+.life { width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #ff9a80, #ef2b2b 60%, #a3101f); border: 2px solid var(--ink); display: inline-block; }
+.life.off { background: #c9c0d6; }
+.chip.bump { animation: bump .3s ease-out; }
+@keyframes bump { 40% { transform: scale(1.18); } }
+.hud-right { display: flex; align-items: center; gap: 8px; }
+#pauseBtn {
+  pointer-events: auto; width: 48px; height: 48px; border-radius: 16px; border: 3px solid var(--ink); background: rgba(255,248,236,.92);
+  box-shadow: 0 3px 0 var(--ink); font-size: 20px; font-weight: 800; display: grid; place-items: center; padding: 0;
+}
+#pauseBtn::before { content: ""; width: 14px; height: 18px; border-left: 5px solid var(--ink); border-right: 5px solid var(--ink); }
+#fps { position: fixed; left: calc(12px + var(--safe-l)); bottom: calc(6px + var(--safe-b)); z-index: 21; font: 12px ui-monospace, monospace; color: #fff; text-shadow: 0 1px 2px #000; display: none; }
+
+/* ---------- touch controls ---------- */
+#touch { position: fixed; inset: 0; z-index: 10; display: none; touch-action: none; }
+#touch.show { display: block; }
+.tbtn {
+  position: absolute; bottom: calc(18px + var(--safe-b)); width: 84px; height: 84px; border-radius: 50%;
+  background: rgba(255,255,255,.22); border: 3px solid rgba(255,255,255,.75); box-shadow: 0 4px 0 rgba(29,22,56,.35);
+  display: grid; place-items: center; pointer-events: none; transition: transform .05s, background .05s;
+}
+.tbtn.on { background: rgba(255,255,255,.55); transform: scale(.94); }
+.tbtn svg { width: 38px; height: 38px; fill: #fff; filter: drop-shadow(0 2px 0 rgba(29,22,56,.5)); }
+.tbtn[data-btn=left] { left: calc(18px + var(--safe-l)); }
+.tbtn[data-btn=right] { left: calc(118px + var(--safe-l)); }
+.tbtn[data-btn=jump] { right: calc(22px + var(--safe-r)); width: 100px; height: 100px; background: rgba(239,43,43,.35); }
+.tbtn[data-btn=jump].on { background: rgba(239,43,43,.65); }
+body:not(.touch) #touch .tbtn { display: none; }
+
+/* rotate overlay */
+#rotate { position: fixed; inset: 0; z-index: 90; display: none; background: #1d1638; color: #fff; align-items: center; justify-content: center; flex-direction: column; gap: 14px; text-align: center; padding: 24px; }
+#rotate .phone { width: 54px; height: 92px; border: 4px solid #fff; border-radius: 12px; animation: rot 1.6s ease-in-out infinite; }
+@keyframes rot { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) and (pointer: coarse) {
+  body.playing #rotate { display: flex; }
+}
+
+/* lab panel */
+#lab { position: fixed; z-index: 30; right: calc(8px + var(--safe-r)); top: calc(64px + var(--safe-t)); bottom: calc(130px + var(--safe-b)); width: min(320px, 46vw); display: none; flex-direction: column; background: rgba(255,248,236,.95); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); overflow: hidden; touch-action: pan-y; }
+#lab.show { display: flex; }
+#lab.collapsed { bottom: auto; }
+#lab.collapsed .lab-body { display: none; }
+.lab-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #2a1d4a; color: #fff; font-weight: 800; }
+.lab-head button { background: #fff; border: 0; border-radius: 10px; font-weight: 800; padding: 4px 10px; min-height: 34px; }
+.lab-body { overflow-y: auto; padding: 8px 10px 12px; font-size: 14px; }
+.lab-read { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font: 13px ui-monospace, monospace; background: #fff; border: 2px solid #e4d9c6; border-radius: 10px; padding: 6px; margin-bottom: 8px; }
+.lab-row { display: grid; grid-template-columns: 1fr 64px; gap: 2px 8px; align-items: center; margin: 6px 0; }
+.lab-row label { font-weight: 700; font-size: 13px; }
+.lab-row output { font: 12px ui-monospace, monospace; text-align: right; }
+.lab-row input { grid-column: 1 / 3; width: 100%; accent-color: var(--red); }
+.lab-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.lab-actions button { border: 2px solid var(--ink); border-radius: 10px; background: #fff; font-weight: 700; padding: 4px 8px; min-height: 36px; font-size: 13px; }
+.lab-actions button.on { background: var(--gold); }
+.toast { position: fixed; left: 50%; top: calc(70px + var(--safe-t)); transform: translateX(-50%); z-index: 95; background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 14px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (max-height: 430px) {
+  .panel { padding: 14px 18px; }
+  .panel h2 { font-size: 24px; }
+  .btn { min-height: 46px; font-size: 18px; }
+  .logo .l1 { font-size: 52px; } .logo .l2 { font-size: 44px; }
+  .hero-ball { width: 54px; height: 54px; }
+  .hero-ball::before, .hero-ball::after { top: 15px; width: 10px; height: 12px; }
+  .hero-ball::before { left: 12px; } .hero-ball::after { right: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .hero-ball { animation: none; } }
+</style>
+</head>
+<body>
+<div id="game"></div>
+
+<div id="hud">
+  <div>
+    <span class="chip" id="hudEggs"><span class="egg-ico"></span><span id="eggTxt">0/0</span></span>
+    <span class="chip" id="hudLives"></span>
+  </div>
+  <div class="hud-right">
+    <span class="chip" id="hudTime">0:00</span>
+    <button id="pauseBtn" aria-label="Pausa"></button>
+  </div>
+</div>
+<div id="fps"></div>
+
+<div id="touch">
+  <div class="tbtn" data-btn="left"><svg viewBox="0 0 24 24"><path d="M15.5 4 7 12l8.5 8z"/></svg></div>
+  <div class="tbtn" data-btn="right"><svg viewBox="0 0 24 24"><path d="M8.5 4 17 12l-8.5 8z"/></svg></div>
+  <div class="tbtn" data-btn="jump"><svg viewBox="0 0 24 24"><path d="M12 4 4 13h5v7h6v-7h5z"/></svg></div>
+</div>
+
+<section id="title" class="screen">
+  <div class="logo"><span class="l1">BOUNCE</span><span class="l2">REBORN</span></div>
+  <div class="hero-ball" aria-hidden="true"></div>
+  <div class="title-menu">
+    <button class="btn primary" data-act="play">▶ Jugar</button>
+    <button class="btn" data-act="levels">Niveles</button>
+    <button class="btn" data-act="lab">Laboratorio</button>
+    <button class="btn" data-act="settings">Ajustes</button>
+  </div>
+  <div class="tip" id="installTip">En iPhone: gira a horizontal. Para pantalla completa: Compartir → «Agregar a inicio».</div>
+  <div class="version" id="version"></div>
+</section>
+
+<section id="levels" class="screen dim">
+  <div class="panel" style="width:min(640px,100%)">
+    <h2>Niveles</h2>
+    <div class="levels" id="levelList"></div>
+    <div class="btns row"><button class="btn small" data-act="back">← Volver</button></div>
+  </div>
+</section>
+
+<section id="settings" class="screen dim">
+  <div class="panel">
+    <h2>Ajustes</h2>
+    <div class="field"><span>Música</span><input type="range" id="setMusic" min="0" max="1" step="0.05"></div>
+    <div class="field"><span>Efectos</span><input type="range" id="setSfx" min="0" max="1" step="0.05"></div>
+    <div class="field"><span>Calidad</span>
+      <select id="setQuality"><option value="auto">Automática</option><option value="high">Alta (nítida)</option><option value="saver">Ahorro de batería</option></select></div>
+    <div class="field"><span>Mostrar FPS</span><input type="checkbox" id="setFps"></div>
+    <div class="field"><span>Físicas del laboratorio en el juego</span><input type="checkbox" id="setCustom"></div>
+    <div class="small-note">Controles: ← → / A D para rodar · ↑ / Espacio / W para saltar (mantén para rebotar) · P pausa · R reinicia.</div>
+    <div class="small-note" id="storageNote"></div>
+    <div class="btns row">
+      <button class="btn small" data-act="reset-progress">Borrar progreso</button>
+      <button class="btn small go" data-act="back">Listo</button>
+    </div>
+  </div>
+</section>
+
+<section id="pause" class="screen dim">
+  <div class="panel">
+    <h2>Pausa</h2>
+    <p id="pauseLevel"></p>
+    <div class="btns">
+      <button class="btn go" data-act="resume">▶ Continuar</button>
+      <button class="btn" data-act="restart">↻ Reiniciar nivel</button>
+      <button class="btn" data-act="settings">Ajustes</button>
+      <button class="btn" data-act="menu">Salir al menú</button>
+    </div>
+  </div>
+</section>
+
+<section id="victory" class="screen dim">
+  <div class="panel">
+    <h2>¡Nivel completado!</h2>
+    <p id="vicLevel"></p>
+    <div class="stats">
+      <div class="stat"><b id="vicEggs">0/0</b><span>huevos</span></div>
+      <div class="stat"><b id="vicTime">0:00</b><span>tiempo</span></div>
+    </div>
+    <div class="medals" id="vicMedals">
+      <div class="medal" title="Completado">★</div>
+      <div class="medal" title="Todos los huevos">🥚</div>
+      <div class="medal" title="Tiempo récord">⏱</div>
+    </div>
+    <div class="newrec" id="vicRec"></div>
+    <div class="btns row">
+      <button class="btn small" data-act="restart">↻ Repetir</button>
+      <button class="btn small" data-act="menu">Menú</button>
+      <button class="btn small go" data-act="next" id="nextBtn">Siguiente ▶</button>
+    </div>
+  </div>
+</section>
+
+<section id="defeat" class="screen dim">
+  <div class="panel">
+    <h2>¡Sin vidas!</h2>
+    <p>La pelota necesita un respiro. ¿Otra vez?</p>
+    <div class="btns">
+      <button class="btn primary" data-act="restart">↻ Reintentar</button>
+      <button class="btn" data-act="menu">Salir al menú</button>
+    </div>
+  </div>
+</section>
+
+<aside id="lab">
+  <div class="lab-head"><span>Laboratorio</span><button data-act="lab-toggle">▾</button></div>
+  <div class="lab-body">
+    <div class="lab-read" id="labRead"></div>
+    <div class="lab-actions" id="labForms"></div>
+    <div id="labSliders"></div>
+    <div class="lab-actions">
+      <button data-act="lab-copy">Copiar valores</button>
+      <button data-act="lab-default">Restaurar</button>
+      <button data-act="lab-use">Usar en el juego</button>
+    </div>
+  </div>
+</aside>
+
+<div id="rotate"><div class="phone"></div><b>Gira tu iPhone</b><span>BOUNCE REBORN se juega en horizontal</span></div>
+<div class="toast" id="toast"></div>
+
+<!--GAME_SCRIPT-->
+</body>
+</html>

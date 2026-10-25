@@ -1,0 +1,16 @@
+{
+  "name": "Bounce Reborn",
+  "short_name": "Bounce",
+  "description": "Plataformas de una pelota roja rebotadora.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#63c8f2",
+  "theme_color": "#1b6b8f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
