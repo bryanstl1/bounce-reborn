@@ -174,3 +174,16 @@ test('layout fits the screen without page scroll', async ({ page }) => {
   expect(Math.abs(m.canvas[0] - m.cw)).toBeLessThan(2);
   expect(Math.abs(m.canvas[1] - m.ch)).toBeLessThan(2);
 });
+
+test('losing every life shows the defeat screen and retry restarts the level', async ({ page }) => {
+  await boot(page);
+  await startLevel(page);
+  for (let i = 0; i < 3; i++) {
+    await page.waitForFunction(() => (window as any).__BOUNCE.state().status === 'playing');
+    await page.evaluate(() => (window as any).__BOUNCE.teleport(1748, 740));
+    await page.waitForFunction(() => (window as any).__BOUNCE.state().status !== 'playing');
+  }
+  await expect(page.locator('#defeat')).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: /Reintentar/ }).click();
+  await page.waitForFunction(() => (window as any).__BOUNCE.state()?.lives === 3 && (window as any).__BOUNCE.state()?.status === 'playing');
+});

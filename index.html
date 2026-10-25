@@ -217,6 +217,9 @@ body:not(.touch) #touch .tbtn { display: none; }
   .hero-ball::before, .hero-ball::after { top: 15px; width: 10px; height: 12px; }
   .hero-ball::before { left: 12px; } .hero-ball::after { right: 12px; }
 }
+@media (max-height: 520px) {
+  #lab { top: calc(58px + var(--safe-t)); bottom: calc(8px + var(--safe-b)); right: calc(136px + var(--safe-r)); width: min(300px, 40vw); }
+}
 @media (prefers-reduced-motion: reduce) { .hero-ball { animation: none; } }
 </style>
 </head>

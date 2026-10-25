@@ -1,6 +1,6 @@
 # Análisis de referencias — Bounce Tales
 
-Este documento resume lo que se midió y observó en los dos videos de referencia que entregó el autor (clips de TikTok con gameplay del juego original de 2008, de Rovio y Nokia). Los videos se usan **solo como referencia de diseño**. No se extrajo ni se redistribuye ningún recurso del juego original: sprites, música, niveles o logotipos. Todo el arte, el sonido y los niveles de BOUNCE REBORN son originales.
+Este documento resume lo que se midió y observó en los dos videos de referencia que entregó el autor, y cómo se calibraron las físicas (clips de TikTok con gameplay del juego original de 2008, de Rovio y Nokia). Los videos se usan **solo como referencia de diseño**. No se extrajo ni se redistribuye ningún recurso del juego original: sprites, música, niveles o logotipos. Todo el arte, el sonido y los niveles de BOUNCE REBORN son originales.
 
 ## Material analizado
 
@@ -20,6 +20,47 @@ Este documento resume lo que se midió y observó en los dos videos de referenci
 - **Unidad de medida.** Todas las medidas se expresan en **diámetros de pelota (D)**, porque es lo único que no depende del escalado del video.
 
 > Las medidas son estimaciones con ruido (compresión de TikTok, recortes, velocidad alterada). Por eso **todo valor físico del juego es un parámetro ajustable** en `src/physics/params.ts` y en el Laboratorio de físicas.
+
+## Calibración con las constantes del juego clásico
+
+Después del análisis de video, el autor señaló la descompilación comunitaria [HelloOO7/BounceTales](https://github.com/HelloOO7/BounceTales). En `BounceObject.java` están documentadas las constantes de físicas del juego de 2008. **Se tomaron solo los valores numéricos**: no se copió código, niveles ni recursos.
+
+En el original, 1 unidad = 1 px y el **radio** de la pelota es 20 (diámetro D = 40). En BOUNCE REBORN el radio es 24, así que las distancias se escalan ×1,2.
+
+| Constante (forma normal) | Original | BOUNCE REBORN | En diámetros |
+|---|---|---|---|
+| Gravedad | 400 | 480 px/s² | 10 D/s² |
+| Impulso de salto | 288 | 346 px/s | altura 2,6 D, subida 0,72 s |
+| Velocidad máxima | 280 | 336 px/s | 7 D/s |
+| Aceleración en suelo | 500 | 600 px/s² | máx. en 0,56 s |
+| Aceleración en el aire | 500 / 1,5 | 400 px/s² | |
+| Fricción | 0,6 × g × cos(pendiente) | 288 × cos θ | se desliza ≈ 4 D al soltar |
+| Rebote (*ricochet*) | 0,1 | 0,12 | |
+| Velocidad terminal | 999 | 1200 px/s | |
+| Pendiente máxima para saltar | 55° | 55° | |
+
+| Forma | Salto | Velocidad máx. | Aceleración | Nota |
+|---|---|---|---|---|
+| Pesada (piedra) | 255 / 1,4 → ×0,63 | 350 → ×1,25 | ×0,5 | casi no controla en el aire (÷2,5) |
+| Ligera (burbuja) | 162,5 / 0,5 → ×1,13 | 150 → ×0,54 | ×1,25 | controla mejor en el aire |
+
+### Cruce con las mediciones de video
+
+- **Altura del salto:** el grupo de alturas medido en el video (2,5–3,1 D) coincide con 2,6 D.
+- **Gravedad:** el video B corregido por su aceleración ×2 da ≈ 8–11 D/s², y el valor real es 10 D/s². Esto confirma que **el video B estaba acelerado al doble**: el juego original es más flotado de lo que parece en el clip.
+- **Velocidad:** la medida del video (≈ 7 D/s) coincide con la constante (7 D/s).
+
+> Las secciones 1 a 3 de abajo conservan la estimación inicial basada solo en video. Los valores vigentes son los de la tabla anterior.
+
+### Agregados modernos (no estaban en el original)
+
+Se pueden ajustar o desactivar en el laboratorio:
+
+- Tiempo coyote: 0,08 s.
+- Búfer de salto: 0,12 s.
+- Salto variable: corte ×0,7 tras 0,12 s.
+- Tope de velocidad en bajadas: 560 px/s.
+- Rebote suavizado en esquinas.
 
 ## 1. Movimiento horizontal y aceleración
 
@@ -133,6 +174,4 @@ En BOUNCE REBORN se agregan, como mejoras permitidas:
 
 - **Código:** `src/physics/params.ts` (`DEFAULT_PARAMS`, `FORM_MODIFIERS`).
 - **En el juego:** menú → **Laboratorio de físicas**. Tiene controles deslizantes en vivo, lectura de velocidad y altura del salto, y botones para copiar o restaurar los valores.
-- **Formas:**
-  - Pesada: gravedad ×1,35, salto ×0,86, rebote ×0,25.
-  - Ligera: gravedad ×0,55 y rebote mayor.
+- **Formas:** ver la tabla de calibración (pesada = piedra, ligera = burbuja).

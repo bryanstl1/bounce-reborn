@@ -357,7 +357,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i <= 18; i++) {
       const x = 100 + i * Dm;
       g.lineBetween(x, 800, x, 800 - (i % 5 === 0 ? 30 : 12));
-      if (i % 5 === 0) this.add.text(x, 760, `${i}D`, { fontFamily: 'system-ui, sans-serif', fontSize: '14px', color: '#ffffff', resolution: 3 }).setOrigin(0.5, 1).setDepth(D.hints);
+      if (i % 5 === 0 && i > 0) this.add.text(x, 760, `${i}D`, { fontFamily: 'system-ui, sans-serif', fontSize: '14px', color: '#ffffff', resolution: 3 }).setOrigin(0.5, 1).setDepth(D.hints);
     }
     // height ruler at the start
     for (let i = 1; i <= 6; i++) {
